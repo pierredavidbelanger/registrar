@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.7
 ENTRYPOINT ["/usr/local/bin/registrar"]
 
 COPY . /go/src/github.com/pierredavidbelanger/registrar

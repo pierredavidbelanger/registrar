@@ -106,7 +106,12 @@ func (registry *Registry) Run() {
 			registry.UnregisterAll()
 			return
 		case <-ticker.C:
-			go registry.Refresh()
+			go func() {
+				err := registry.Refresh()
+				if err != nil {
+					log.Errorf("Error while Refreshing: %v", err)
+				}
+			}()
 		case event := <-events:
 			if event.Type != "container" {
 				continue
@@ -114,9 +119,19 @@ func (registry *Registry) Run() {
 			log.Debugf("event: %s", event.Action)
 			switch event.Action {
 			case "start", "restart", "unpause", "health_status: healthy":
-				go registry.Register(event.ID)
+				go func() {
+					err := registry.Register(event.ID)
+					if err != nil {
+						log.Errorf("Error while Registering %q: %v", event.ID, err)
+					}
+				}()
 			case "die", "oom", "pause", "health_status: unhealthy":
-				go registry.Unregister(event.ID)
+				go func() {
+					err := registry.Unregister(event.ID)
+					if err != nil {
+						log.Errorf("Error while Unregistering %q: %v", event.ID, err)
+					}
+				}()
 			}
 		}
 	}
