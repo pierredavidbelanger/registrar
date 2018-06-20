@@ -159,7 +159,16 @@ func (registry *Registry) Register(containerId string) error {
 		if registrarPortEnabled == "true" {
 
 			registrarPortName := container.Config.Labels["registrar."+containerPort+".name"]
-			registrarPortTags := container.Config.Labels["registrar."+containerPort+".tags"]
+
+			serviceTags := make([]string, 0)
+			tagPrefix := "registrar."+containerPort+".tags."
+			for label, value := range container.Config.Labels {
+				if strings.HasPrefix(label, tagPrefix) {
+					if tag := strings.TrimPrefix(label, tagPrefix); tag != "" {
+						serviceTags = append(serviceTags, tag+"="+value)
+					}
+				}
+			}
 
 			for _, binding := range bindings {
 
@@ -176,11 +185,6 @@ func (registry *Registry) Register(containerId string) error {
 						} else {
 							serviceName = imageName + ":" + containerPort
 						}
-					}
-
-					serviceTags := make([]string, 0)
-					if registrarPortTags != "" {
-						serviceTags = append(serviceTags, strings.Split(registrarPortTags, ",")...)
 					}
 
 					serviceRegistration := &consulapi.AgentServiceRegistration{
